@@ -52,7 +52,7 @@ class FileCopyManager:
         log_filename = f"file_copy_log_{int(time.time())}.log"
         
         logging.basicConfig(
-            level=logging.INFO,
+            level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(log_filename),
@@ -65,9 +65,22 @@ class FileCopyManager:
         """Validate that all required paths exist"""
         self.logger.info("Validating paths...")
         
-        # Check source path
-        if not self.source_path.exists():
-            self.logger.error(f"Source path does not exist: {self.source_path}")
+        # Check source path with detailed logging
+        self.logger.info(f"Checking source path: {self.source_path}")
+        try:
+            if not self.source_path.exists():
+                self.logger.error(f"Source path does not exist: {self.source_path}")
+                return False
+            else:
+                self.logger.info(f"Source path accessible: {self.source_path}")
+                # Try to list some files to verify read access
+                try:
+                    file_count = len(list(self.source_path.iterdir()))
+                    self.logger.info(f"Source path contains {file_count} items")
+                except Exception as e:
+                    self.logger.warning(f"Cannot list source path contents: {e}")
+        except Exception as e:
+            self.logger.error(f"Error accessing source path: {e}")
             return False
         
         # Check CSV directory
@@ -139,35 +152,43 @@ class FileCopyManager:
 
     def find_source_files(self, product_name: str) -> List[Path]:
         """Find all files matching the product name in source directory"""
-        self.logger.debug(f"Searching for files matching: {product_name}")
+        self.logger.info(f"Searching for files matching: {product_name}")
         
         # Try different file extensions commonly used for CAD files
         extensions = ['*', '*.dwg', '*.dxf', '*.step', '*.stp', '*.iges', '*.igs', '*.sat', '*.3dm', '*.catpart', '*.catproduct', '*.prt', '*.asm']
         
         found_files = []
         
-        for ext in extensions:
-            # Search with exact name
-            pattern1 = f"**/{product_name}.{ext[2:]}" if ext != '*' else f"**/{product_name}.*"
-            # Search with name containing the product name
-            pattern2 = f"**/*{product_name}*.{ext[2:]}" if ext != '*' else f"**/*{product_name}*.*"
-            
-            for pattern in [pattern1, pattern2]:
-                try:
-                    matches = list(self.source_path.glob(pattern))
-                    for match in matches:
-                        if match.is_file() and match not in found_files:
-                            found_files.append(match)
-                            self.logger.debug(f"Found file: {match}")
-                except Exception as e:
-                    self.logger.debug(f"Error searching with pattern {pattern}: {e}")
-                    
-                if found_files:  # If we found files with exact match, don't search with wildcards
-                    break
-            
-            if found_files:
-                break
+        try:
+            for ext in extensions:
+                self.logger.debug(f"Searching with extension: {ext}")
                 
+                # Search with exact name
+                pattern1 = f"**/{product_name}.{ext[2:]}" if ext != '*' else f"**/{product_name}.*"
+                # Search with name containing the product name
+                pattern2 = f"**/*{product_name}*.{ext[2:]}" if ext != '*' else f"**/*{product_name}*.*"
+                
+                for pattern in [pattern1, pattern2]:
+                    try:
+                        self.logger.debug(f"Trying pattern: {pattern}")
+                        matches = list(self.source_path.glob(pattern))
+                        for match in matches:
+                            if match.is_file() and match not in found_files:
+                                found_files.append(match)
+                                self.logger.debug(f"Found file: {match}")
+                    except Exception as e:
+                        self.logger.warning(f"Error searching with pattern {pattern}: {e}")
+                        continue
+                        
+                    if found_files:  # If we found files with exact match, don't search with wildcards
+                        break
+                
+                if found_files:
+                    break
+                    
+        except Exception as e:
+            self.logger.error(f"Critical error during file search for {product_name}: {e}")
+            
         if not found_files:
             self.logger.warning(f"No files found for product: {product_name}")
         else:
@@ -243,12 +264,15 @@ class FileCopyManager:
             return
             
         # Process each row
-        for row in csv_data:
+        for row_index, row in enumerate(csv_data, start=1):
             try:
+                self.logger.info(f"Processing row {row_index}/{len(csv_data)}: {row.get('Product Name', 'Unknown')}")
                 self.process_row(row, material)
             except Exception as e:
                 self.logger.error(f"Error processing row {row.get('row_number', 'unknown')}: {e}")
                 self.stats['errors'] += 1
+                
+        self.logger.info(f"Completed processing {csv_file.name}")
 
     def process_row(self, row: Dict, material: str):
         """Process a single row from CSV"""
@@ -359,7 +383,7 @@ def main():
     """Main function"""
     # Configuration - Update these paths for your Windows environment
     SOURCE_PATH = r"\\172.16.70.71\Mechanical Data\Nishant"
-    DESTINATION_BASE = r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Factory layout"
+    DESTINATION_BASE = r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Factory layout\Drawing Files"
     CSV_DIRECTORY = "db"  # Current directory's db folder
     
     print("File Copy Manager v1.0")
