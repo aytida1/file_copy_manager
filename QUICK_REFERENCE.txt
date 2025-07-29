@@ -1,0 +1,80 @@
+========================================
+   FILE COPY MANAGER - QUICK REFERENCE
+========================================
+
+🚀 QUICK START (Windows)
+1. validate_setup.bat      ← Check network access
+2. setup.bat              ← Create virtual environment  
+3. run_file_copy_manager.bat ← Execute the script
+
+📁 FILES INCLUDED
+- file_copy_manager.py     ← Main script
+- requirements.txt         ← Dependencies (none needed)
+- setup.bat               ← Environment setup
+- run_file_copy_manager.bat ← Script runner
+- validate_setup.bat      ← Network checker
+- test_csv_parsing.py     ← CSV validator
+- README.md               ← Full documentation
+- DEPLOYMENT_CHECKLIST.md ← Deployment guide
+- db/                     ← CSV files folder
+
+🔧 PATHS CONFIGURED
+Source: \\172.16.70.71\Mechanical Data\Nishant
+Dest:   \\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Factory layout
+
+📊 PROCESSING LOGIC
+For each CSV row where Quantity ≥ 1:
+1. Find Product Name in source directory
+2. Create folder: Material/Thickness/
+3. If Quantity = 1: Copy with original name
+4. If Quantity > 1: Copy with numbered prefixes:
+   1_filename, 2_filename, 3_filename, etc.
+
+🎯 EXAMPLES
+Quantity = 1:
+Product: SC09-03-52-017_R3, Material: 1060 Alloy, Thickness: 1
+Result: 1 file in "1060 Alloy/1/" folder:
+- SC09-03-52-017_R3.dwg (original name)
+
+Quantity > 1:
+Product: DR02-04-16-003_R3, Material: 1060 Alloy, Thickness: 1, Quantity: 4
+Result: 4 files in "1060 Alloy/1/" folder:
+- 1_DR02-04-16-003_R3.dwg
+- 2_DR02-04-16-003_R3.dwg  
+- 3_DR02-04-16-003_R3.dwg
+- 4_DR02-04-16-003_R3.dwg
+
+⚠️ IMPORTANT
+- Run validate_setup.bat FIRST
+- Backup important data
+- Monitor first few minutes
+- Check log file after completion
+
+🔍 TROUBLESHOOTING
+- Network issues: Check 172.16.70.71 access
+- Python errors: Install Python 3.7+
+- Permission errors: Run as Administrator
+- File not found: Check product names
+
+📈 EXPECTED PROCESSING
+- 1060 Alloy: ~133 products
+- AISI 1020: ~1,190 products
+- AISI 304: ~169 products  
+- AISI 316: ~19 products
+Total: ~1,511 products to process
+
+✅ SUCCESS INDICATORS
+- "Operation completed successfully!" message
+- Log shows files copied > 0
+- Folder structure created correctly
+- Minimal "files not found" warnings
+
+🆘 IF PROBLEMS OCCUR
+1. Stop script (Ctrl+C)
+2. Check log file: file_copy_log_[timestamp].log
+3. Fix issue (network, permissions, etc.)
+4. Re-run safely (won't duplicate)
+
+========================================
+Need help? Check README.md for details!
+========================================

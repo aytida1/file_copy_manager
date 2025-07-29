@@ -1,0 +1,84 @@
+========================================================
+           WINDOWS DEPLOYMENT CHECKLIST  
+========================================================
+
+□ BEFORE YOU START
+  □ Windows 10/11 computer ready
+  □ Administrator access available
+  □ Network access to 172.16.70.71 confirmed
+
+□ STEP 1: INSTALL PYTHON (if needed)
+  □ Download from python.org
+  □ ✅ CHECK "Add Python to PATH" during install
+  □ Test: Open cmd, type "python --version"
+
+□ STEP 2: COPY FILES
+  □ Create folder: C:\FileCopyManager
+  □ Copy ALL project files to this folder
+  □ Ensure db\ folder contains 4 CSV files
+
+□ STEP 3: VALIDATE NETWORK
+  □ Open Command Prompt as Administrator
+  □ Navigate: cd C:\FileCopyManager
+  □ Run: validate_setup.bat
+  □ Verify all checkmarks (✓) appear
+
+□ STEP 4: SETUP ENVIRONMENT  
+  □ Run: setup.bat
+  □ Wait for "Setup completed successfully!"
+
+□ STEP 5: OPTIONAL TEST
+  □ Run: venv\Scripts\activate.bat
+  □ Run: python test_enhanced.py
+  □ Review CSV parsing results
+
+□ STEP 6: EXECUTE MAIN PROGRAM
+  □ Run: run_file_copy_manager.bat
+  □ Review configuration shown
+  □ Type 'y' to confirm and start
+  □ Monitor progress in console
+  □ Wait for completion message
+
+□ VERIFICATION
+  □ Check log file created
+  □ Verify folder structure in destination
+  □ Confirm files copied correctly
+  □ Save log file for records
+
+========================================================
+FILES TO COPY (Total: 9 files + 1 folder):
+
+✓ file_copy_manager.py
+✓ requirements.txt  
+✓ setup.bat
+✓ run_file_copy_manager.bat
+✓ validate_setup.bat
+✓ test_enhanced.py
+✓ README.md
+✓ QUICK_REFERENCE.txt
+✓ WINDOWS_DEPLOYMENT_GUIDE.md
+✓ db\ (folder with 4 CSV files)
+
+========================================================
+QUICK COMMANDS:
+
+Setup:           setup.bat
+Test Network:    validate_setup.bat  
+Run Program:     run_file_copy_manager.bat
+Manual Run:      venv\Scripts\activate.bat
+                 python file_copy_manager.py
+
+========================================================
+SUPPORT INFO:
+
+Expected Processing: ~1,511 products
+Log File: file_copy_log_[timestamp].log
+Safe to re-run: YES (won't duplicate files)
+
+If problems occur:
+1. Check network connectivity (ping 172.16.70.71)
+2. Run Command Prompt as Administrator  
+3. Review log file for specific errors
+4. Ensure all files copied correctly
+
+========================================================
