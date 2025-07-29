@@ -154,150 +154,79 @@ class FileCopyManager:
         return data
 
     def find_source_files(self, product_name: str) -> List[Path]:
-        """Find all files matching the product name in multiple source directories with depth limit"""
+        """Find all files matching the product name using glob module for recursive search"""
         self.logger.info(f"Searching for files matching: {product_name}")
         
         found_files = []
-        max_depth = 7  # Search up to 7 levels deep
         
         try:
-            # Try different file extensions commonly used for CAD files
+            # CAD file extensions to search for
             extensions = ['dwg', 'dxf', 'step', 'stp', 'iges', 'igs', 'sat', '3dm', 'catpart', 'catproduct', 'prt', 'asm']
             
             # Search in all source paths
             for source_idx, source_path in enumerate(self.source_paths, 1):
-                self.logger.debug(f"Searching in source path {source_idx}: {source_path}")
+                self.logger.info(f"Searching in source path {source_idx}: {source_path}")
                 
-                # Strategy 1: Search in root directory first (fastest)
-                self.logger.debug(f"Searching in root of source {source_idx}: {source_path}")
+                # Convert source_path to string for glob module
+                source_str = str(source_path)
+                
                 for ext in extensions:
                     try:
-                        # Exact name match in root
-                        exact_file = source_path / f"{product_name}.{ext}"
-                        if exact_file.exists() and exact_file.is_file():
-                            found_files.append(exact_file)
-                            self.logger.debug(f"Found exact match in root of source {source_idx}: {exact_file}")
-                            
+                        # Strategy 1: Exact filename match (recursive search using glob module)
+                        self.logger.debug(f"Searching for exact match: {product_name}.{ext}")
+                        exact_pattern = os.path.join(source_str, "**", f"{product_name}.{ext}")
+                        matches = glob.glob(exact_pattern, recursive=True)
+                        
+                        for match_str in matches:
+                            match = Path(match_str)
+                            if match.is_file() and match not in found_files:
+                                found_files.append(match)
+                                self.logger.info(f"Found exact match in source {source_idx}: {match}")
+                        
                         # Also try uppercase extension
-                        exact_file_upper = source_path / f"{product_name}.{ext.upper()}"
-                        if exact_file_upper.exists() and exact_file_upper.is_file():
-                            found_files.append(exact_file_upper)
-                            self.logger.debug(f"Found exact match in root of source {source_idx} (uppercase): {exact_file_upper}")
+                        self.logger.debug(f"Searching for exact match: {product_name}.{ext.upper()}")
+                        exact_pattern_upper = os.path.join(source_str, "**", f"{product_name}.{ext.upper()}")
+                        matches_upper = glob.glob(exact_pattern_upper, recursive=True)
+                        
+                        for match_str in matches_upper:
+                            match = Path(match_str)
+                            if match.is_file() and match not in found_files:
+                                found_files.append(match)
+                                self.logger.info(f"Found exact match (uppercase) in source {source_idx}: {match}")
+                        
+                        # If we found exact matches, don't search for partial matches with this extension
+                        if matches or matches_upper:
+                            continue
                             
-                    except Exception as e:
-                        self.logger.debug(f"Error checking {product_name}.{ext} in source {source_idx}: {e}")
-                        continue
+                        # Strategy 2: Partial filename match (recursive search using glob module)
+                        self.logger.debug(f"Searching for partial match: *{product_name}*.{ext}")
+                        partial_pattern = os.path.join(source_str, "**", f"*{product_name}*.{ext}")
+                        partial_matches = glob.glob(partial_pattern, recursive=True)
                         
-                # If found files in root, continue to next source path (but don't return yet)
-                if found_files:
-                    self.logger.info(f"Found {len(found_files)} file(s) in root of source {source_idx}")
-                    continue
-                    
-                # Strategy 2: Iterative breadth-first search through directory tree with depth limit
-                self.logger.debug(f"Starting iterative deep search in source {source_idx}...")
-                
-                # Use a queue for breadth-first traversal with depth tracking
-                dirs_to_search = [(source_path, 0)]  # (directory, depth)
-                searched_count = 0
-                max_dirs = 500  # Limit per source path to prevent infinite searching
-                
-                while dirs_to_search and searched_count < max_dirs:
-                    current_dir, current_depth = dirs_to_search.pop(0)
-                    searched_count += 1
-                    
-                    # Skip if we've reached maximum depth
-                    if current_depth >= max_depth:
-                        continue
-                    
-                    try:
-                        self.logger.debug(f"Searching directory {searched_count} at depth {current_depth}: {current_dir.name}")
+                        for match_str in partial_matches:
+                            match = Path(match_str)
+                            if match.is_file() and match not in found_files:
+                                found_files.append(match)
+                                self.logger.info(f"Found partial match in source {source_idx}: {match}")
                         
-                        # Search for files in current directory
-                        for ext in extensions:
-                            try:
-                                # Exact name match
-                                exact_file = current_dir / f"{product_name}.{ext}"
-                                if exact_file.exists() and exact_file.is_file():
-                                    found_files.append(exact_file)
-                                    self.logger.debug(f"Found exact match in source {source_idx} at depth {current_depth}: {exact_file}")
-                                    
-                                # Uppercase extension
-                                exact_file_upper = current_dir / f"{product_name}.{ext.upper()}"
-                                if exact_file_upper.exists() and exact_file_upper.is_file():
-                                    found_files.append(exact_file_upper)
-                                    self.logger.debug(f"Found exact match in source {source_idx} at depth {current_depth} (uppercase): {exact_file_upper}")
-                                    
-                            except Exception as e:
-                                self.logger.debug(f"Error checking file in {current_dir}: {e}")
-                                continue
+                        # Also try uppercase extension for partial matches
+                        self.logger.debug(f"Searching for partial match: *{product_name}*.{ext.upper()}")
+                        partial_pattern_upper = os.path.join(source_str, "**", f"*{product_name}*.{ext.upper()}")
+                        partial_matches_upper = glob.glob(partial_pattern_upper, recursive=True)
                         
-                        # Add subdirectories to search queue (only if under depth limit)
-                        if current_depth < max_depth - 1:
-                            try:
-                                subdirs = [d for d in current_dir.iterdir() if d.is_dir()]
-                                for subdir in subdirs:
-                                    dirs_to_search.append((subdir, current_depth + 1))
-                                self.logger.debug(f"Added {len(subdirs)} subdirectories at depth {current_depth + 1}")
-                            except Exception as e:
-                                self.logger.debug(f"Error listing subdirectories in {current_dir}: {e}")
-                                continue
+                        for match_str in partial_matches_upper:
+                            match = Path(match_str)
+                            if match.is_file() and match not in found_files:
+                                found_files.append(match)
+                                self.logger.info(f"Found partial match (uppercase) in source {source_idx}: {match}")
                                 
                     except Exception as e:
-                        self.logger.debug(f"Error searching directory {current_dir}: {e}")
+                        self.logger.warning(f"Error searching for {product_name}.{ext} in source {source_idx}: {e}")
                         continue
-                        
-                self.logger.debug(f"Searched {searched_count} directories in source {source_idx}")
                 
-                # Strategy 3: If still no exact matches, try partial name matching in limited directories
-                if not found_files:
-                    self.logger.debug(f"Trying partial name matching in source {source_idx}...")
-                    try:
-                        # Search root directory for partial matches
-                        for ext in extensions:
-                            pattern = f"*{product_name}*.{ext}"
-                            matches = list(source_path.glob(pattern))
-                            for match in matches:
-                                if match.is_file() and match not in found_files:
-                                    found_files.append(match)
-                                    self.logger.debug(f"Found partial match in root of source {source_idx}: {match}")
-                                    
-                            # Also try uppercase
-                            pattern_upper = f"*{product_name}*.{ext.upper()}"
-                            matches_upper = list(source_path.glob(pattern_upper))
-                            for match in matches_upper:
-                                if match.is_file() and match not in found_files:
-                                    found_files.append(match)
-                                    self.logger.debug(f"Found partial match in root of source {source_idx} (uppercase): {match}")
-                        
-                        # If still no files, try partial matching in first level subdirectories
-                        if not found_files:
-                            try:
-                                first_level_dirs = [d for d in source_path.iterdir() if d.is_dir()][:10]  # Limit to first 10
-                                for subdir in first_level_dirs:
-                                    for ext in extensions:
-                                        try:
-                                            pattern = f"*{product_name}*.{ext}"
-                                            matches = list(subdir.glob(pattern))
-                                            for match in matches:
-                                                if match.is_file() and match not in found_files:
-                                                    found_files.append(match)
-                                                    self.logger.debug(f"Found partial match in source {source_idx} subdir {subdir.name}: {match}")
-                                                    
-                                        except Exception as e:
-                                            continue
-                                            
-                                    if found_files:  # Stop after finding files
-                                        break
-                                        
-                            except Exception as e:
-                                self.logger.debug(f"Error in partial matching for source {source_idx}: {e}")
-                                
-                    except Exception as e:
-                        self.logger.warning(f"Error with partial name matching in source {source_idx}: {e}")
-                
-                # If we found files in this source path, we can break and return them
+                # If we found files in this source path, stop searching other source paths
                 if found_files:
-                    self.logger.info(f"Found {len(found_files)} file(s) in source {source_idx}: {source_path}")
+                    self.logger.info(f"Found {len(found_files)} file(s) in source {source_idx}, stopping search")
                     break
                     
         except Exception as e:
