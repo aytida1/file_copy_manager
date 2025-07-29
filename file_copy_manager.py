@@ -154,15 +154,12 @@ class FileCopyManager:
         return data
 
     def find_source_files(self, product_name: str) -> List[Path]:
-        """Find all files matching the product name using glob module for recursive search"""
-        self.logger.info(f"Searching for files matching: {product_name}")
+        """Find DXF files matching the product name using efficient two-step search"""
+        self.logger.info(f"Searching for DXF files matching: {product_name}")
         
         found_files = []
         
         try:
-            # CAD file extensions to search for
-            extensions = ['dwg', 'dxf', 'step', 'stp', 'iges', 'igs', 'sat', '3dm', 'catpart', 'catproduct', 'prt', 'asm']
-            
             # Search in all source paths
             for source_idx, source_path in enumerate(self.source_paths, 1):
                 self.logger.info(f"Searching in source path {source_idx}: {source_path}")
@@ -170,72 +167,84 @@ class FileCopyManager:
                 # Convert source_path to string for glob module
                 source_str = str(source_path)
                 
-                for ext in extensions:
-                    try:
-                        # Strategy 1: Exact filename match (recursive search using glob module)
-                        self.logger.debug(f"Searching for exact match: {product_name}.{ext}")
-                        exact_pattern = os.path.join(source_str, "**", f"{product_name}.{ext}")
-                        matches = glob.glob(exact_pattern, recursive=True)
+                # Step 1: Find any file with the product name (to locate the directory)
+                self.logger.debug(f"Step 1: Searching for any file with name: {product_name}")
+                
+                # Search for exact product name with any extension
+                any_file_pattern = os.path.join(source_str, "**", f"{product_name}.*")
+                any_files = glob.glob(any_file_pattern, recursive=True)
+                
+                # Also search for partial matches
+                if not any_files:
+                    partial_pattern = os.path.join(source_str, "**", f"*{product_name}*.*")
+                    any_files = glob.glob(partial_pattern, recursive=True)
+                
+                if any_files:
+                    self.logger.debug(f"Found {len(any_files)} file(s) with product name, now searching for DXF")
+                    
+                    # Step 2: For each found file, look for DXF files in the same directory
+                    directories_checked = set()
+                    
+                    for any_file_str in any_files:
+                        any_file_path = Path(any_file_str)
+                        parent_dir = any_file_path.parent
                         
-                        for match_str in matches:
-                            match = Path(match_str)
-                            if match.is_file() and match not in found_files:
-                                found_files.append(match)
-                                self.logger.info(f"Found exact match in source {source_idx}: {match}")
+                        # Skip if we already checked this directory
+                        if str(parent_dir) in directories_checked:
+                            continue
+                        directories_checked.add(str(parent_dir))
+                        
+                        self.logger.debug(f"Step 2: Searching for DXF files in directory: {parent_dir}")
+                        
+                        # Look for DXF files with exact product name in this directory
+                        dxf_pattern_exact = os.path.join(str(parent_dir), f"{product_name}.dxf")
+                        dxf_files_exact = glob.glob(dxf_pattern_exact)
                         
                         # Also try uppercase extension
-                        self.logger.debug(f"Searching for exact match: {product_name}.{ext.upper()}")
-                        exact_pattern_upper = os.path.join(source_str, "**", f"{product_name}.{ext.upper()}")
-                        matches_upper = glob.glob(exact_pattern_upper, recursive=True)
+                        dxf_pattern_exact_upper = os.path.join(str(parent_dir), f"{product_name}.DXF")
+                        dxf_files_exact_upper = glob.glob(dxf_pattern_exact_upper)
                         
-                        for match_str in matches_upper:
-                            match = Path(match_str)
-                            if match.is_file() and match not in found_files:
-                                found_files.append(match)
-                                self.logger.info(f"Found exact match (uppercase) in source {source_idx}: {match}")
+                        # Combine exact matches
+                        exact_dxf_files = dxf_files_exact + dxf_files_exact_upper
                         
-                        # If we found exact matches, don't search for partial matches with this extension
-                        if matches or matches_upper:
-                            continue
+                        for dxf_file_str in exact_dxf_files:
+                            dxf_file = Path(dxf_file_str)
+                            if dxf_file.is_file() and dxf_file not in found_files:
+                                found_files.append(dxf_file)
+                                self.logger.info(f"Found exact DXF match in source {source_idx}: {dxf_file}")
+                        
+                        # If no exact DXF matches, try partial matches in this directory
+                        if not exact_dxf_files:
+                            dxf_pattern_partial = os.path.join(str(parent_dir), f"*{product_name}*.dxf")
+                            dxf_files_partial = glob.glob(dxf_pattern_partial)
                             
-                        # Strategy 2: Partial filename match (recursive search using glob module)
-                        self.logger.debug(f"Searching for partial match: *{product_name}*.{ext}")
-                        partial_pattern = os.path.join(source_str, "**", f"*{product_name}*.{ext}")
-                        partial_matches = glob.glob(partial_pattern, recursive=True)
-                        
-                        for match_str in partial_matches:
-                            match = Path(match_str)
-                            if match.is_file() and match not in found_files:
-                                found_files.append(match)
-                                self.logger.info(f"Found partial match in source {source_idx}: {match}")
-                        
-                        # Also try uppercase extension for partial matches
-                        self.logger.debug(f"Searching for partial match: *{product_name}*.{ext.upper()}")
-                        partial_pattern_upper = os.path.join(source_str, "**", f"*{product_name}*.{ext.upper()}")
-                        partial_matches_upper = glob.glob(partial_pattern_upper, recursive=True)
-                        
-                        for match_str in partial_matches_upper:
-                            match = Path(match_str)
-                            if match.is_file() and match not in found_files:
-                                found_files.append(match)
-                                self.logger.info(f"Found partial match (uppercase) in source {source_idx}: {match}")
-                                
-                    except Exception as e:
-                        self.logger.warning(f"Error searching for {product_name}.{ext} in source {source_idx}: {e}")
-                        continue
+                            # Also try uppercase extension for partial
+                            dxf_pattern_partial_upper = os.path.join(str(parent_dir), f"*{product_name}*.DXF")
+                            dxf_files_partial_upper = glob.glob(dxf_pattern_partial_upper)
+                            
+                            # Combine partial matches
+                            partial_dxf_files = dxf_files_partial + dxf_files_partial_upper
+                            
+                            for dxf_file_str in partial_dxf_files:
+                                dxf_file = Path(dxf_file_str)
+                                if dxf_file.is_file() and dxf_file not in found_files:
+                                    found_files.append(dxf_file)
+                                    self.logger.info(f"Found partial DXF match in source {source_idx}: {dxf_file}")
                 
-                # If we found files in this source path, stop searching other source paths
+                # If we found DXF files in this source path, stop searching other source paths
                 if found_files:
-                    self.logger.info(f"Found {len(found_files)} file(s) in source {source_idx}, stopping search")
+                    self.logger.info(f"Found {len(found_files)} DXF file(s) in source {source_idx}, stopping search")
                     break
+                else:
+                    self.logger.debug(f"No files found with product name '{product_name}' in source {source_idx}")
                     
         except Exception as e:
-            self.logger.error(f"Critical error during file search for {product_name}: {e}")
+            self.logger.error(f"Critical error during DXF file search for {product_name}: {e}")
             
         if not found_files:
-            self.logger.warning(f"No files found for product: {product_name} in any source path")
+            self.logger.warning(f"No DXF files found for product: {product_name} in any source path")
         else:
-            self.logger.info(f"Found {len(found_files)} file(s) total for product: {product_name}")
+            self.logger.info(f"Found {len(found_files)} DXF file(s) total for product: {product_name}")
             
         return found_files
 
@@ -424,7 +433,7 @@ class FileCopyManager:
 
 def main():
     """Main function"""
-    # Configuration - Multiple source paths with depth-limited search
+    # Configuration - Multiple source paths with efficient DXF-focused search
     SOURCE_PATHS = [
         r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Drawing & BOM",
         r"\\172.16.70.71\mechanical data\Nishant\Drug Dispensor DD01",
@@ -433,14 +442,14 @@ def main():
     DESTINATION_BASE = r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Factory layout\Drawing Files"
     CSV_DIRECTORY = "db"  # Current directory's db folder
     
-    print("File Copy Manager v2.0 - Multi-Source Search")
+    print("File Copy Manager v2.1 - Efficient DXF Search")
     print("=" * 60)
     print(f"Source Paths ({len(SOURCE_PATHS)} directories):")
     for i, path in enumerate(SOURCE_PATHS, 1):
         print(f"  {i}. {path}")
     print(f"Destination: {DESTINATION_BASE}")
     print(f"CSV Directory: {CSV_DIRECTORY}")
-    print(f"Search Depth: Up to 7 levels deep")
+    print(f"File Type: DXF files only (efficient search)")
     print("=" * 60)
     
     # Confirm before proceeding
