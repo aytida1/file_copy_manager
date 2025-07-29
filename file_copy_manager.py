@@ -18,16 +18,16 @@ import sys
 
 
 class FileCopyManager:
-    def __init__(self, source_path: str, destination_base: str, csv_directory: str):
+    def __init__(self, source_paths: List[str], destination_base: str, csv_directory: str):
         """
         Initialize the File Copy Manager
         
         Args:
-            source_path: Source directory containing design files
+            source_paths: List of source directories containing design files
             destination_base: Base destination directory
             csv_directory: Directory containing CSV files
         """
-        self.source_path = Path(source_path)
+        self.source_paths = [Path(path) for path in source_paths]
         self.destination_base = Path(destination_base)
         self.csv_directory = Path(csv_directory)
         
@@ -43,7 +43,9 @@ class FileCopyManager:
         }
         
         self.logger.info(f"Initialized FileCopyManager")
-        self.logger.info(f"Source path: {self.source_path}")
+        self.logger.info(f"Source paths: {len(self.source_paths)} directories")
+        for i, source_path in enumerate(self.source_paths, 1):
+            self.logger.info(f"  {i}. {source_path}")
         self.logger.info(f"Destination base: {self.destination_base}")
         self.logger.info(f"CSV directory: {self.csv_directory}")
 
@@ -65,23 +67,24 @@ class FileCopyManager:
         """Validate that all required paths exist"""
         self.logger.info("Validating paths...")
         
-        # Check source path with detailed logging
-        self.logger.info(f"Checking source path: {self.source_path}")
-        try:
-            if not self.source_path.exists():
-                self.logger.error(f"Source path does not exist: {self.source_path}")
+        # Check all source paths with detailed logging
+        for i, source_path in enumerate(self.source_paths, 1):
+            self.logger.info(f"Checking source path {i}: {source_path}")
+            try:
+                if not source_path.exists():
+                    self.logger.error(f"Source path {i} does not exist: {source_path}")
+                    return False
+                else:
+                    self.logger.info(f"Source path {i} accessible: {source_path}")
+                    # Try to list some files to verify read access
+                    try:
+                        file_count = len(list(source_path.iterdir()))
+                        self.logger.info(f"Source path {i} contains {file_count} items")
+                    except Exception as e:
+                        self.logger.warning(f"Cannot list source path {i} contents: {e}")
+            except Exception as e:
+                self.logger.error(f"Error accessing source path {i}: {e}")
                 return False
-            else:
-                self.logger.info(f"Source path accessible: {self.source_path}")
-                # Try to list some files to verify read access
-                try:
-                    file_count = len(list(self.source_path.iterdir()))
-                    self.logger.info(f"Source path contains {file_count} items")
-                except Exception as e:
-                    self.logger.warning(f"Cannot list source path contents: {e}")
-        except Exception as e:
-            self.logger.error(f"Error accessing source path: {e}")
-            return False
         
         # Check CSV directory
         if not self.csv_directory.exists():
@@ -151,148 +154,159 @@ class FileCopyManager:
         return data
 
     def find_source_files(self, product_name: str) -> List[Path]:
-        """Find all files matching the product name in source directory using iterative deep search"""
+        """Find all files matching the product name in multiple source directories with depth limit"""
         self.logger.info(f"Searching for files matching: {product_name}")
         
         found_files = []
+        max_depth = 7  # Search up to 7 levels deep
         
         try:
             # Try different file extensions commonly used for CAD files
             extensions = ['dwg', 'dxf', 'step', 'stp', 'iges', 'igs', 'sat', '3dm', 'catpart', 'catproduct', 'prt', 'asm']
             
-            # Strategy 1: Search in root directory first (fastest)
-            self.logger.debug(f"Searching in root directory: {self.source_path}")
-            for ext in extensions:
-                try:
-                    # Exact name match in root
-                    exact_file = self.source_path / f"{product_name}.{ext}"
-                    if exact_file.exists() and exact_file.is_file():
-                        found_files.append(exact_file)
-                        self.logger.debug(f"Found exact match in root: {exact_file}")
-                        
-                    # Also try uppercase extension
-                    exact_file_upper = self.source_path / f"{product_name}.{ext.upper()}"
-                    if exact_file_upper.exists() and exact_file_upper.is_file():
-                        found_files.append(exact_file_upper)
-                        self.logger.debug(f"Found exact match in root (uppercase): {exact_file_upper}")
-                        
-                except Exception as e:
-                    self.logger.debug(f"Error checking {product_name}.{ext}: {e}")
-                    continue
-                    
-            # If found files in root, return them
-            if found_files:
-                self.logger.info(f"Found {len(found_files)} file(s) in root directory for product: {product_name}")
-                return found_files
+            # Search in all source paths
+            for source_idx, source_path in enumerate(self.source_paths, 1):
+                self.logger.debug(f"Searching in source path {source_idx}: {source_path}")
                 
-            # Strategy 2: Iterative breadth-first search through directory tree
-            self.logger.debug("Starting iterative deep search...")
-            
-            # Use a queue for breadth-first traversal
-            dirs_to_search = [self.source_path]
-            searched_count = 0
-            max_dirs = 1000  # Limit to prevent infinite searching
-            
-            while dirs_to_search and searched_count < max_dirs:
-                current_dir = dirs_to_search.pop(0)
-                searched_count += 1
-                
-                try:
-                    self.logger.debug(f"Searching directory {searched_count}: {current_dir.name}")
-                    
-                    # Search for files in current directory
-                    for ext in extensions:
-                        try:
-                            # Exact name match
-                            exact_file = current_dir / f"{product_name}.{ext}"
-                            if exact_file.exists() and exact_file.is_file():
-                                found_files.append(exact_file)
-                                self.logger.debug(f"Found exact match in {current_dir.name}: {exact_file}")
-                                
-                            # Uppercase extension
-                            exact_file_upper = current_dir / f"{product_name}.{ext.upper()}"
-                            if exact_file_upper.exists() and exact_file_upper.is_file():
-                                found_files.append(exact_file_upper)
-                                self.logger.debug(f"Found exact match in {current_dir.name} (uppercase): {exact_file_upper}")
-                                
-                        except Exception as e:
-                            self.logger.debug(f"Error checking file in {current_dir}: {e}")
-                            continue
-                    
-                    # If we found files in this directory, we can stop searching
-                    if found_files:
-                        self.logger.info(f"Found {len(found_files)} file(s) in directory: {current_dir}")
-                        break
-                    
-                    # Add subdirectories to search queue
+                # Strategy 1: Search in root directory first (fastest)
+                self.logger.debug(f"Searching in root of source {source_idx}: {source_path}")
+                for ext in extensions:
                     try:
-                        subdirs = [d for d in current_dir.iterdir() if d.is_dir()]
-                        dirs_to_search.extend(subdirs)
-                        self.logger.debug(f"Added {len(subdirs)} subdirectories to search queue")
+                        # Exact name match in root
+                        exact_file = source_path / f"{product_name}.{ext}"
+                        if exact_file.exists() and exact_file.is_file():
+                            found_files.append(exact_file)
+                            self.logger.debug(f"Found exact match in root of source {source_idx}: {exact_file}")
+                            
+                        # Also try uppercase extension
+                        exact_file_upper = source_path / f"{product_name}.{ext.upper()}"
+                        if exact_file_upper.exists() and exact_file_upper.is_file():
+                            found_files.append(exact_file_upper)
+                            self.logger.debug(f"Found exact match in root of source {source_idx} (uppercase): {exact_file_upper}")
+                            
                     except Exception as e:
-                        self.logger.debug(f"Error listing subdirectories in {current_dir}: {e}")
+                        self.logger.debug(f"Error checking {product_name}.{ext} in source {source_idx}: {e}")
                         continue
                         
-                except Exception as e:
-                    self.logger.debug(f"Error searching directory {current_dir}: {e}")
+                # If found files in root, continue to next source path (but don't return yet)
+                if found_files:
+                    self.logger.info(f"Found {len(found_files)} file(s) in root of source {source_idx}")
                     continue
                     
-            self.logger.debug(f"Searched {searched_count} directories total")
-            
-            # Strategy 3: If still no exact matches, try partial name matching in limited directories
-            if not found_files and searched_count < max_dirs:
-                self.logger.debug("Trying partial name matching in root and immediate subdirectories...")
-                try:
-                    # Search root directory for partial matches
-                    for ext in extensions:
-                        pattern = f"*{product_name}*.{ext}"
-                        matches = list(self.source_path.glob(pattern))
-                        for match in matches:
-                            if match.is_file() and match not in found_files:
-                                found_files.append(match)
-                                self.logger.debug(f"Found partial match in root: {match}")
-                                
-                        # Also try uppercase
-                        pattern_upper = f"*{product_name}*.{ext.upper()}"
-                        matches_upper = list(self.source_path.glob(pattern_upper))
-                        for match in matches_upper:
-                            if match.is_file() and match not in found_files:
-                                found_files.append(match)
-                                self.logger.debug(f"Found partial match in root (uppercase): {match}")
+                # Strategy 2: Iterative breadth-first search through directory tree with depth limit
+                self.logger.debug(f"Starting iterative deep search in source {source_idx}...")
+                
+                # Use a queue for breadth-first traversal with depth tracking
+                dirs_to_search = [(source_path, 0)]  # (directory, depth)
+                searched_count = 0
+                max_dirs = 500  # Limit per source path to prevent infinite searching
+                
+                while dirs_to_search and searched_count < max_dirs:
+                    current_dir, current_depth = dirs_to_search.pop(0)
+                    searched_count += 1
                     
-                    # If still no files, try partial matching in first level subdirectories
-                    if not found_files:
-                        try:
-                            first_level_dirs = [d for d in self.source_path.iterdir() if d.is_dir()][:20]  # Limit to first 20
-                            for subdir in first_level_dirs:
-                                for ext in extensions:
-                                    try:
-                                        pattern = f"*{product_name}*.{ext}"
-                                        matches = list(subdir.glob(pattern))
-                                        for match in matches:
-                                            if match.is_file() and match not in found_files:
-                                                found_files.append(match)
-                                                self.logger.debug(f"Found partial match in {subdir.name}: {match}")
-                                                
-                                    except Exception as e:
-                                        continue
-                                        
-                                if found_files:  # Stop after finding files
-                                    break
+                    # Skip if we've reached maximum depth
+                    if current_depth >= max_depth:
+                        continue
+                    
+                    try:
+                        self.logger.debug(f"Searching directory {searched_count} at depth {current_depth}: {current_dir.name}")
+                        
+                        # Search for files in current directory
+                        for ext in extensions:
+                            try:
+                                # Exact name match
+                                exact_file = current_dir / f"{product_name}.{ext}"
+                                if exact_file.exists() and exact_file.is_file():
+                                    found_files.append(exact_file)
+                                    self.logger.debug(f"Found exact match in source {source_idx} at depth {current_depth}: {exact_file}")
                                     
-                        except Exception as e:
-                            self.logger.debug(f"Error in partial matching: {e}")
-                            
-                except Exception as e:
-                    self.logger.warning(f"Error with partial name matching: {e}")
+                                # Uppercase extension
+                                exact_file_upper = current_dir / f"{product_name}.{ext.upper()}"
+                                if exact_file_upper.exists() and exact_file_upper.is_file():
+                                    found_files.append(exact_file_upper)
+                                    self.logger.debug(f"Found exact match in source {source_idx} at depth {current_depth} (uppercase): {exact_file_upper}")
+                                    
+                            except Exception as e:
+                                self.logger.debug(f"Error checking file in {current_dir}: {e}")
+                                continue
+                        
+                        # Add subdirectories to search queue (only if under depth limit)
+                        if current_depth < max_depth - 1:
+                            try:
+                                subdirs = [d for d in current_dir.iterdir() if d.is_dir()]
+                                for subdir in subdirs:
+                                    dirs_to_search.append((subdir, current_depth + 1))
+                                self.logger.debug(f"Added {len(subdirs)} subdirectories at depth {current_depth + 1}")
+                            except Exception as e:
+                                self.logger.debug(f"Error listing subdirectories in {current_dir}: {e}")
+                                continue
+                                
+                    except Exception as e:
+                        self.logger.debug(f"Error searching directory {current_dir}: {e}")
+                        continue
+                        
+                self.logger.debug(f"Searched {searched_count} directories in source {source_idx}")
+                
+                # Strategy 3: If still no exact matches, try partial name matching in limited directories
+                if not found_files:
+                    self.logger.debug(f"Trying partial name matching in source {source_idx}...")
+                    try:
+                        # Search root directory for partial matches
+                        for ext in extensions:
+                            pattern = f"*{product_name}*.{ext}"
+                            matches = list(source_path.glob(pattern))
+                            for match in matches:
+                                if match.is_file() and match not in found_files:
+                                    found_files.append(match)
+                                    self.logger.debug(f"Found partial match in root of source {source_idx}: {match}")
+                                    
+                            # Also try uppercase
+                            pattern_upper = f"*{product_name}*.{ext.upper()}"
+                            matches_upper = list(source_path.glob(pattern_upper))
+                            for match in matches_upper:
+                                if match.is_file() and match not in found_files:
+                                    found_files.append(match)
+                                    self.logger.debug(f"Found partial match in root of source {source_idx} (uppercase): {match}")
+                        
+                        # If still no files, try partial matching in first level subdirectories
+                        if not found_files:
+                            try:
+                                first_level_dirs = [d for d in source_path.iterdir() if d.is_dir()][:10]  # Limit to first 10
+                                for subdir in first_level_dirs:
+                                    for ext in extensions:
+                                        try:
+                                            pattern = f"*{product_name}*.{ext}"
+                                            matches = list(subdir.glob(pattern))
+                                            for match in matches:
+                                                if match.is_file() and match not in found_files:
+                                                    found_files.append(match)
+                                                    self.logger.debug(f"Found partial match in source {source_idx} subdir {subdir.name}: {match}")
+                                                    
+                                        except Exception as e:
+                                            continue
+                                            
+                                    if found_files:  # Stop after finding files
+                                        break
+                                        
+                            except Exception as e:
+                                self.logger.debug(f"Error in partial matching for source {source_idx}: {e}")
+                                
+                    except Exception as e:
+                        self.logger.warning(f"Error with partial name matching in source {source_idx}: {e}")
+                
+                # If we found files in this source path, we can break and return them
+                if found_files:
+                    self.logger.info(f"Found {len(found_files)} file(s) in source {source_idx}: {source_path}")
+                    break
                     
         except Exception as e:
             self.logger.error(f"Critical error during file search for {product_name}: {e}")
             
         if not found_files:
-            self.logger.warning(f"No files found for product: {product_name}")
+            self.logger.warning(f"No files found for product: {product_name} in any source path")
         else:
-            self.logger.info(f"Found {len(found_files)} file(s) for product: {product_name}")
+            self.logger.info(f"Found {len(found_files)} file(s) total for product: {product_name}")
             
         return found_files
 
@@ -481,17 +495,24 @@ class FileCopyManager:
 
 def main():
     """Main function"""
-    # Configuration - Update these paths for your Windows environment
-    SOURCE_PATH = r"\\172.16.70.71\Mechanical Data\Nishant"
+    # Configuration - Multiple source paths with depth-limited search
+    SOURCE_PATHS = [
+        r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Drawing & BOM",
+        r"\\172.16.70.71\mechanical data\Nishant\Drug Dispensor DD01",
+        r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018"
+    ]
     DESTINATION_BASE = r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Factory layout\Drawing Files"
     CSV_DIRECTORY = "db"  # Current directory's db folder
     
-    print("File Copy Manager v1.0")
-    print("=" * 50)
-    print(f"Source: {SOURCE_PATH}")
+    print("File Copy Manager v2.0 - Multi-Source Search")
+    print("=" * 60)
+    print(f"Source Paths ({len(SOURCE_PATHS)} directories):")
+    for i, path in enumerate(SOURCE_PATHS, 1):
+        print(f"  {i}. {path}")
     print(f"Destination: {DESTINATION_BASE}")
     print(f"CSV Directory: {CSV_DIRECTORY}")
-    print("=" * 50)
+    print(f"Search Depth: Up to 7 levels deep")
+    print("=" * 60)
     
     # Confirm before proceeding
     response = input("Do you want to proceed? (y/N): ").strip().lower()
@@ -500,7 +521,7 @@ def main():
         return
     
     # Create and run the manager
-    manager = FileCopyManager(SOURCE_PATH, DESTINATION_BASE, CSV_DIRECTORY)
+    manager = FileCopyManager(SOURCE_PATHS, DESTINATION_BASE, CSV_DIRECTORY)
     success = manager.run()
     
     if success:
