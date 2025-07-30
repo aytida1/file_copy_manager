@@ -1,0 +1,407 @@
+FILES NOT FOUND REPORT
+==================================================
+Generated: 2025-07-30 02:52:23
+Total files not found: 67
+
+1. Product Name: CS04-27-011SM
+   Material: 1060 Alloy
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 38
+----------------------------------------
+2. Product Name: CS04-27-012SM
+   Material: 1060 Alloy
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 39
+----------------------------------------
+3. Product Name: CS04-11-002SM
+   Material: 1060 Alloy
+   Thickness: 1.5mm
+   Quantity: 48
+   CSV Row: 54
+----------------------------------------
+4. Product Name: CS04-11-004SM
+   Material: 1060 Alloy
+   Thickness: 1.5mm
+   Quantity: 48
+   CSV Row: 55
+----------------------------------------
+5. Product Name: CS04-27-009SM
+   Material: 1060 Alloy
+   Thickness: 3mm
+   Quantity: 4
+   CSV Row: 106
+----------------------------------------
+6. Product Name: SC09-03-60-002
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 40
+   CSV Row: 48
+----------------------------------------
+7. Product Name: CS04-27-005SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 49
+----------------------------------------
+8. Product Name: CS04-22-013SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 24
+   CSV Row: 50
+----------------------------------------
+9. Product Name: CS04-22-014SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 24
+   CSV Row: 51
+----------------------------------------
+10. Product Name: CS04-22-015SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 24
+   CSV Row: 52
+----------------------------------------
+11. Product Name: CS04-22-016SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 53
+----------------------------------------
+12. Product Name: CS04-22-019SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 54
+----------------------------------------
+13. Product Name: CS04-22-017SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 16
+   CSV Row: 55
+----------------------------------------
+14. Product Name: CS04-22-018SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 48
+   CSV Row: 56
+----------------------------------------
+15. Product Name: CS04-22-021SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 57
+----------------------------------------
+16. Product Name: CS04-22-023SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 48
+   CSV Row: 58
+----------------------------------------
+17. Product Name: CS04-22-026SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 24
+   CSV Row: 59
+----------------------------------------
+18. Product Name: CS04-22-030SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 16
+   CSV Row: 60
+----------------------------------------
+19. Product Name: CS04-22-031SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 48
+   CSV Row: 61
+----------------------------------------
+20. Product Name: CS04-23-014SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 16
+   CSV Row: 62
+----------------------------------------
+21. Product Name: CS04-23-016SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 16
+   CSV Row: 63
+----------------------------------------
+22. Product Name: CS04-23-023SM_R2
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 64
+----------------------------------------
+23. Product Name: CS04-28-016SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 24
+   CSV Row: 65
+----------------------------------------
+24. Product Name: CS04-28-019SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 24
+   CSV Row: 66
+----------------------------------------
+25. Product Name: CS04-25-016SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 67
+----------------------------------------
+26. Product Name: CS04-25-017SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 68
+----------------------------------------
+27. Product Name: CS04-25-021SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 69
+----------------------------------------
+28. Product Name: CS04-25-030SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 70
+----------------------------------------
+29. Product Name: CS04-25-018SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 71
+----------------------------------------
+30. Product Name: CS04-23-025SM_R2
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 72
+----------------------------------------
+31. Product Name: CS04-28-014SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 73
+----------------------------------------
+32. Product Name: CS04-28-017SM
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 74
+----------------------------------------
+33. Product Name: CS04-23-024SM_R2
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 83
+----------------------------------------
+34. Product Name: CS04-23-026SM_R2
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 4
+   CSV Row: 84
+----------------------------------------
+35. Product Name: CS04-23-027SM_R1
+   Material: AISI 1020
+   Thickness: 1mm
+   Quantity: 12
+   CSV Row: 88
+----------------------------------------
+36. Product Name: CS04-23-013SM
+   Material: AISI 1020
+   Thickness: 1.2mm
+   Quantity: 8
+   CSV Row: 91
+----------------------------------------
+37. Product Name: CS04-28-013SM
+   Material: AISI 1020
+   Thickness: 1.2mm
+   Quantity: 4
+   CSV Row: 92
+----------------------------------------
+38. Product Name: CS04-26-007SM
+   Material: AISI 1020
+   Thickness: 1.2mm
+   Quantity: 4
+   CSV Row: 93
+----------------------------------------
+39. Product Name: CS04-27-001SM_R1
+   Material: AISI 1020
+   Thickness: 1.5mm
+   Quantity: 4
+   CSV Row: 201
+----------------------------------------
+40. Product Name: CS04-27-007SM
+   Material: AISI 1020
+   Thickness: 1.5mm
+   Quantity: 4
+   CSV Row: 202
+----------------------------------------
+41. Product Name: CS04-24-015SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 448
+----------------------------------------
+42. Product Name: CS04-24-002SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 449
+----------------------------------------
+43. Product Name: CS04-24-003SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 450
+----------------------------------------
+44. Product Name: CS04-24-004SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 16
+   CSV Row: 451
+----------------------------------------
+45. Product Name: CS04-27-003SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 452
+----------------------------------------
+46. Product Name: CS04-27-004SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 8
+   CSV Row: 453
+----------------------------------------
+47. Product Name: CS04-11-006SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 48
+   CSV Row: 454
+----------------------------------------
+48. Product Name: CS04-23-001SM_R1
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 48
+   CSV Row: 455
+----------------------------------------
+49. Product Name: CS04-23-012SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 8
+   CSV Row: 456
+----------------------------------------
+50. Product Name: CS04-23-015SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 16
+   CSV Row: 457
+----------------------------------------
+51. Product Name: CS04-23-017SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 16
+   CSV Row: 458
+----------------------------------------
+52. Product Name: CS04-28-012SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 459
+----------------------------------------
+53. Product Name: CS04-28-015SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 8
+   CSV Row: 460
+----------------------------------------
+54. Product Name: CS04-28-018SM
+   Material: AISI 1020
+   Thickness: 2mm
+   Quantity: 8
+   CSV Row: 461
+----------------------------------------
+55. Product Name: CS04-27-006SM
+   Material: AISI 1020
+   Thickness: 3mm
+   Quantity: 4
+   CSV Row: 816
+----------------------------------------
+56. Product Name: CS04-11-005SM
+   Material: AISI 1020
+   Thickness: 3mm
+   Quantity: 48
+   CSV Row: 817
+----------------------------------------
+57. Product Name: CS04-22-025SM_R1
+   Material: AISI 1020
+   Thickness: 3mm
+   Quantity: 288
+   CSV Row: 818
+----------------------------------------
+58. Product Name: CS04-23-011SM
+   Material: AISI 1020
+   Thickness: 3mm
+   Quantity: 48
+   CSV Row: 819
+----------------------------------------
+59. Product Name: CS04-23-021SM
+   Material: AISI 304
+   Thickness: 1mm
+   Quantity: 16
+   CSV Row: 17
+----------------------------------------
+60. Product Name: CS04-23-022SM
+   Material: AISI 304
+   Thickness: 1mm
+   Quantity: 16
+   CSV Row: 18
+----------------------------------------
+61. Product Name: CS04-28-022SM
+   Material: AISI 304
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 19
+----------------------------------------
+62. Product Name: CS04-28-023SM
+   Material: AISI 304
+   Thickness: 1mm
+   Quantity: 8
+   CSV Row: 20
+----------------------------------------
+63. Product Name: SC09-03-60-002
+   Material: AISI 304
+   Thickness: 1mm
+   Quantity: 40
+   CSV Row: 24
+----------------------------------------
+64. Product Name: CS04-27-010SM
+   Material: AISI 304
+   Thickness: 1.2mm
+   Quantity: 4
+   CSV Row: 30
+----------------------------------------
+65. Product Name: CS04-27-002SM_R1
+   Material: AISI 304
+   Thickness: 2mm
+   Quantity: 8
+   CSV Row: 86
+----------------------------------------
+66. Product Name: CS04-27-015SM
+   Material: AISI 304
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 87
+----------------------------------------
+67. Product Name: CS04-27-016SM
+   Material: AISI 304
+   Thickness: 2mm
+   Quantity: 4
+   CSV Row: 88
+----------------------------------------

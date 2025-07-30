@@ -42,6 +42,9 @@ class FileCopyManager:
             'errors': 0
         }
         
+        # List to track files not found
+        self.not_found_files = []
+        
         self.logger.info(f"Initialized FileCopyManager")
         self.logger.info(f"Source paths: {len(self.source_paths)} directories")
         for i, source_path in enumerate(self.source_paths, 1):
@@ -54,7 +57,7 @@ class FileCopyManager:
         log_filename = f"file_copy_log_{int(time.time())}.log"
         
         logging.basicConfig(
-            level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
+            level=logging.INFO,  # Changed to DEBUG for more detailed logging
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(log_filename),
@@ -117,7 +120,7 @@ class FileCopyManager:
         self.logger.debug(f"Extracted material '{material}' from filename '{filename}'")
         return material
 
-    def read_csv_data(self, csv_file: Path) -> List[Dict[str, str]]:
+    def read_csv_data(self, csv_file: Path) -> List[Dict]:
         """Read CSV file and return list of dictionaries"""
         self.logger.info(f"Reading CSV file: {csv_file.name}")
         
@@ -279,6 +282,7 @@ class FileCopyManager:
                     dest_file = dest_folder / source_file.name
                     shutil.copy2(source_file, dest_file)
                     copied_count += 1
+                    self.logger.info(f"Copied: {source_file.name} -> {dest_file}")
                 else:
                     # For quantity > 1, copy with numbered prefixes
                     for i in range(1, quantity + 1):
@@ -289,17 +293,11 @@ class FileCopyManager:
                         # Copy the file
                         shutil.copy2(source_file, dest_file)
                         copied_count += 1
-                    
+                    # Log a single message for N-copy with namespace and success indicator
+                    self.logger.info(f"{quantity} copies of '{source_file.name}' created in '{dest_folder}' [SUCCESS]")
             except Exception as e:
                 self.logger.error(f"Error copying file {source_file} to {dest_folder}: {e}")
                 self.stats['errors'] += 1
-        
-        # Log summary message after all files are copied
-        if quantity == 1:
-            self.logger.info(f"Done with copying {len(source_files)} file(s) for '{product_name}' (quantity: 1)")
-        else:
-            self.logger.info(f"Done with pre-namespacing of {quantity} quantity of '{product_name}' - copied {copied_count} files")
-                
         return copied_count
 
     def process_csv_file(self, csv_file: Path):
@@ -329,7 +327,7 @@ class FileCopyManager:
                 
         self.logger.info(f"Completed processing {csv_file.name}")
 
-    def process_row(self, row: Dict[str, str], material: str):
+    def process_row(self, row: Dict, material: str):
         """Process a single row from CSV"""
         product_name = row.get('Product Name', '').strip()
         thickness = row.get('Thickness(mm)', '').strip()
@@ -366,6 +364,14 @@ class FileCopyManager:
         if not source_files:
             self.logger.warning(f"No source files found for: {product_name}")
             self.stats['files_not_found'] += 1
+            # Add to not found list with details
+            self.not_found_files.append({
+                'product_name': product_name,
+                'material': material,
+                'thickness': thickness,
+                'quantity': quantity,
+                'row_number': row.get('row_number', 'unknown')
+            })
             return
             
         # Create destination folder
@@ -379,6 +385,11 @@ class FileCopyManager:
         # Copy files with appropriate naming
         copied_count = self.copy_files_based_on_quantity(source_files, dest_folder, product_name, quantity)
         self.stats['files_copied'] += copied_count
+        
+        if quantity == 1:
+            self.logger.info(f"Successfully processed {product_name}: {copied_count} file(s) copied with original name")
+        else:
+            self.logger.info(f"Successfully processed {product_name}: {copied_count} file(s) copied with numbered prefixes")
 
     def run(self):
         """Main execution method"""
@@ -411,11 +422,8 @@ class FileCopyManager:
             # Print summary
             self.print_summary(time.time() - start_time)
             
-            # Happy completion message
-            self.logger.info(f"\n{'='*60}")
-            self.logger.info("🎉 ALL CSV FILES PROCESSED SUCCESSFULLY! 🎉")
-            self.logger.info("😊 😊 😊 HAPPY HAPPY SMILEYS! 😊 😊 😊")
-            self.logger.info(f"{'='*60}")
+            # Create not found files report
+            self.create_not_found_report()
             
             return True
             
@@ -435,11 +443,40 @@ class FileCopyManager:
         self.logger.info(f"Execution time: {elapsed_time:.2f} seconds")
         self.logger.info(f"{'='*50}")
 
+    def create_not_found_report(self):
+        """Create a text file listing all files that were not found"""
+        if not self.not_found_files:
+            self.logger.info("No files were missing - no not found report created")
+            return
+            
+        report_filename = f"not_found_files_{int(time.time())}.txt"
+        
+        try:
+            with open(report_filename, 'w', encoding='utf-8') as f:
+                f.write("FILES NOT FOUND REPORT\n")
+                f.write("=" * 50 + "\n")
+                f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Total files not found: {len(self.not_found_files)}\n\n")
+                
+                for i, item in enumerate(self.not_found_files, 1):
+                    f.write(f"{i}. Product Name: {item['product_name']}\n")
+                    f.write(f"   Material: {item['material']}\n")
+                    f.write(f"   Thickness: {item['thickness']}mm\n")
+                    f.write(f"   Quantity: {item['quantity']}\n")
+                    f.write(f"   CSV Row: {item['row_number']}\n")
+                    f.write("-" * 40 + "\n")
+                    
+            self.logger.info(f"Not found files report created: {report_filename}")
+            
+        except Exception as e:
+            self.logger.error(f"Error creating not found report: {e}")
+
 
 def main():
     """Main function"""
     # Configuration - Multiple source paths with efficient DXF-focused search
     SOURCE_PATHS = [
+        r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Factory layout\Missing file",
         r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018\DA03_25-1-2019 EPDM\001 DA SM\Drawing & BOM",
         r"\\172.16.70.71\mechanical data\Nishant\Drug Dispensor DD01",
         r"\\172.16.70.71\mechanical data\Nishant\CRM V2 27-12-2018"
@@ -468,13 +505,9 @@ def main():
     success = manager.run()
     
     if success:
-        print("\n" + "="*60)
-        print("🎉 OPERATION COMPLETED SUCCESSFULLY! 🎉")
-        print("😊 😊 😊 ALL CSV FILES PROCESSED! 😊 😊 😊")
-        print("🚀 Ready for production use! 🚀")
-        print("="*60)
+        print("\nOperation completed successfully!")
     else:
-        print("\n❌ Operation completed with errors. Check the log file for details.")
+        print("\nOperation completed with errors. Check the log file for details.")
         
     input("\nPress Enter to exit...")
 
